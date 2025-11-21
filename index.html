@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>KLIMATE | Weather App</title>
+
+  <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="prefetch" href="media/day1.jpg">
+  <link rel="prefetch" href="media/day2.jpg">
+  <link rel="prefetch" href="media/day3.jpg">
+  <link rel="prefetch" href="media/day4.jpg">
+  <link rel="prefetch" href="media/day5.jpg">
+  <link rel="prefetch" href="media/night1.jpg">
+  <link rel="prefetch" href="media/night2.jpg">
+  <link rel="prefetch" href="media/night3.jpg">
+  <link rel="prefetch" href="media/night4.jpg">
+  <link rel="prefetch" href="media/night5.jpg">
+  <link rel="prefetch" href="media/rainy1.jpg">
+  <link rel="prefetch" href="media/rainy2.jpg">
+  <link rel="prefetch" href="media/rainy3.jpg">
+  <link rel="prefetch" href="media/rainy4.jpg">
+  <link rel="prefetch" href="media/rainy5.jpg">
+  <link rel="prefetch" href="media/cloudy1.jpg">
+  <link rel="prefetch" href="media/cloudy2.jpg">
+  <link rel="prefetch" href="media/cloudy3.jpg">
+  <link rel="prefetch" href="media/cloudy4.jpg">
+  <link rel="prefetch" href="media/cloudy5.jpg">
+  <link rel="prefetch" href="icons/loader.gif">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      -webkit-background-size: cover;
+      -moz-background-size: cover;
+      -o-background-size: cover;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
+      background-attachment: fixed;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-brand">
+        <a class="repo-link" href="https://github.com/kananashish/KLIMATE-Weather-App">
+          <span class="brand-icon">⛄</span>
+          <span class="brand-name">KLIMATE</span>
+        </a>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" id="geolocationBtn" title="Use my location" aria-label="Use my location">📍</button>
+        <button class="nav-btn" id="unitToggleBtn" title="Toggle temperature unit" aria-label="Toggle unit">°C</button>
+        <button class="nav-btn" id="favoriteBtn" title="Add to favorites" aria-label="Add to favorites">☆</button>
+        <button class="nav-btn" id="resetBtn" title="Reset" aria-label="Reset">⟳</button>
+        <div class="search-container">
+          <input spellcheck="false" class="search-city" id="searchCity" type="text" autocomplete="off"
+            placeholder="Search City">
+        </div>
+      </div>
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+    <div class="mobile-search">
+      <input spellcheck="false" class="mobile-search-city" id="mobileSearchCity" type="text" autocomplete="off"
+        placeholder="Search City...">
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="weather-display">
+      <h1 class="location-name" id="locationName">Search City...</h1>
+
+      <div class="temperature-container">
+        <div class="temperature-icon"><img class="imgs-as-icons" src="icons/sunny.png" alt="Weather icon"></div>
+        <div class="temperature-value" id="temperatureValue"></div>
+      </div>
+
+      <h2 class="weather-type" id="weatherType"></h2>
+
+      <div class="weather-stats">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Air Quality</span>
+            <span class="stat-value air-quality-index-additional-value">Moderate</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Real Feel</span>
+            <span class="stat-value" id="realFeelAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Humidity</span>
+            <span class="stat-value" id="humidityAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">High</span>
+            <span class="stat-value" id="maxTemperatureAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Low</span>
+            <span class="stat-value" id="minTemperatureAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Wind Speed</span>
+            <span class="stat-value" id="windSpeedAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Wind Direction</span>
+            <span class="stat-value" id="windDirectionAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Visibility</span>
+            <span class="stat-value" id="visibilityAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Pressure</span>
+            <span class="stat-value" id="pressureAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Sunrise</span>
+            <span class="stat-value" id="sunriseAdditionalValue">-</span>
+          </div>
+
+          <div class="stat-card">
+            <span class="stat-label">Sunset</span>
+            <span class="stat-value" id="sunsetAdditionalValue">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="favorites-section" id="favoritesSection" style="display: none;">
+        <h2 class="favorites-label">Favorite Cities</h2>
+        <div id="favoritesContainer" class="favorites-container"></div>
+      </div>
+
+      <div class="daily-forecast">
+        <h2 class="daily-forecast-label">5-Day Forecast</h2>
+        <div id="forecast-container" class="forecast-container">
+      <!-- 
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+            <span class="max-daily-forecast">37<sup>o</sup>C</span>
+            <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div>
+
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+            <span class="max-daily-forecast">37<sup>o</sup>C</span>
+            <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div>
+
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+            <span class="max-daily-forecast">37<sup>o</sup>C</span>
+            <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div>
+
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+            <span class="max-daily-forecast">37<sup>o</sup>C</span>
+            <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div>
+
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+              <span class="max-daily-forecast">37<sup>o</sup>C</span>
+              <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div>
+
+        <div class="daily-forecast-card">
+          <p class="daily-forecast-date">Fri 27</p>
+          <div class="daily-forecast-logo"><img class="imgs-as-icons" src="icons/sunny.png"></div>
+          <div class="max-min-temperature-daily-forecast">
+            <span class="max-daily-forecast">37<sup>o</sup>C</span>
+            <span class="min-daily-forecast">25<sup>o</sup>C</span>
+          </div>
+          <p class="weather-type-daily-forecast">Sunny</p>
+        </div> -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="scripts/features.js"></script>
+  <script src="scripts/navigation.js"></script>
+  <script src="scripts/script.js"></script>
+  <script src="scripts/mobile.js"></script>
+</body>
+
+</html>
