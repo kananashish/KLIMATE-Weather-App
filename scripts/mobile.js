@@ -46,6 +46,30 @@ cityInputMobile.addEventListener("keyup", function (event) {
         var data = await response.json();
 
         if (data.message != "city not found" && data.cod != "404") {
+          // Use the integrated weather display functions from features.js
+          if (typeof window.weatherApp !== 'undefined' && typeof window.updateWeatherDisplay === 'function') {
+            window.weatherApp.currentCity = data.name;
+            window.weatherApp.currentWeatherData = data;
+            window.updateWeatherDisplay(data);
+            window.fetchForecast(data.name);
+            
+            // Call new features
+            if (typeof fetchHourlyForecast === 'function') {
+              fetchHourlyForecast(data.name);
+            }
+            if (typeof fetchAirQuality === 'function') {
+              fetchAirQuality(data.coord.lat, data.coord.lon);
+            }
+            if (typeof addToSearchHistory === 'function') {
+              addToSearchHistory(data.name);
+            }
+            if (typeof updateDynamicBackground === 'function') {
+              updateDynamicBackground(data.weather[0].main, data.sys);
+            }
+            return;
+          }
+          
+          // Fallback to old logic if features.js is not loaded
           var location = data.name;
           var temperature = data.main.temp;
           var weatherType = data.weather[0].description;

@@ -80,6 +80,7 @@
       <div class="nav-actions">
         <button class="nav-btn" id="geolocationBtn" title="Use my location" aria-label="Use my location">📍</button>
         <button class="nav-btn" id="unitToggleBtn" title="Toggle temperature unit" aria-label="Toggle unit">°C</button>
+        <button class="nav-btn" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle theme">🌓</button>
         <button class="nav-btn" id="favoriteBtn" title="Add to favorites" aria-label="Add to favorites">☆</button>
         <button class="nav-btn" id="resetBtn" title="Reset" aria-label="Reset">⟳</button>
         <div class="search-container">
@@ -97,6 +98,7 @@
       <input spellcheck="false" class="mobile-search-city" id="mobileSearchCity" type="text" autocomplete="off"
         placeholder="Search City...">
     </div>
+    <div class="search-history" id="searchHistoryContainer"></div>
   </header>
 
   <main class="main-content">
@@ -169,7 +171,14 @@
         </div>
       </div>
 
-      <div class="favorites-section" id="favoritesSection" style="display: none;">
+      <div class="hourly-forecast-section">
+        <h2 class="hourly-forecast-label">24-Hour Forecast</h2>
+        <div class="hourly-chart-container">
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="favorites-section hidden" id="favoritesSection">
         <h2 class="favorites-label">Favorite Cities</h2>
         <div id="favoritesContainer" class="favorites-container"></div>
       </div>
@@ -253,6 +262,7 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="scripts/features.js"></script>
   <script src="scripts/navigation.js"></script>
   <script src="scripts/script.js"></script>
