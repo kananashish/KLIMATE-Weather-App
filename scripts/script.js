@@ -1,5 +1,18 @@
 var cityInput = document.getElementById("searchCity");
 
+// Debounce function to prevent excessive API calls
+var debounceTimer;
+function debounce(func, delay) {
+  return function() {
+    var context = this;
+    var args = arguments;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      func.apply(context, args);
+    }, delay);
+  };
+}
+
 var backgroundsList = [
   "day1.jpg",
   "day2.jpg",
@@ -27,166 +40,185 @@ var randomBackground = backgroundsList[Math.floor(Math.random() * backgroundsLis
 
 document.body.style.background = "linear-gradient(rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.5)) , url('media/" + randomBackground + "')";
 
-cityInput.addEventListener("keyup", function (event) {
-  if (event.key === "Enter") {
-    loader();
-    function loader() {
+// Extract weather fetching logic into a reusable function
+function fetchWeather(city) {
+  if (!city || city.trim() === "") {
+    document.getElementById("locationName").innerHTML = "Enter a city name...";
+    return;
+  }
 
-      document.getElementById("locationName").innerHTML = "";
+  loader();
+
+  var apiKey = "b1fd6e14799699504191b6bdbcadfc35"; // Default
+  var unit = "metric";
+  var apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${unit}`;
+
+  async function getWeather() {
+    var response = await fetch(apiUrl);
+    var data = await response.json();
+
+    if (data.message != "city not found" && data.cod != "404") {
+      // Use the integrated weather display functions from features.js
+      if (typeof window.weatherApp !== 'undefined' && typeof window.updateWeatherDisplay === 'function') {
+        window.weatherApp.currentCity = data.name;
+        window.weatherApp.currentWeatherData = data;
+        window.updateWeatherDisplay(data);
+        window.fetchForecast(data.name);
+        
+        // Call new features
+        if (typeof fetchHourlyForecast === 'function') {
+          fetchHourlyForecast(data.name);
+        }
+        if (typeof fetchAirQuality === 'function') {
+          fetchAirQuality(data.coord.lat, data.coord.lon);
+        }
+        if (typeof addToSearchHistory === 'function') {
+          addToSearchHistory(data.name);
+        }
+        if (typeof updateDynamicBackground === 'function') {
+          updateDynamicBackground(data.weather[0].main, data.sys);
+        }
+        return;
+      }
+      
+      // Fallback to old logic if features.js is not loaded
+      var location = data.name;
+      var temperature = data.main.temp;
+      var weatherType = data.weather[0].description;
+      var realFeel = data.main.feels_like;
+      var windSpeed = data.wind.speed;
+      var windDirection = data.wind.deg;
+      var visibility = data.visibility / 1000;
+      var pressure = data.main.pressure;
+      var maxTemperature = data.main.temp_max;
+      var minTemperature = data.main.temp_min;
+      var humidity = data.main.humidity;
+      var sunrise = data.sys.sunrise;
+      var sunset = data.sys.sunset;
+
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          const forecastContainer = document.getElementById('forecast-container');
+
+          forecastContainer.innerHTML = '';
+
+          const dailyForecasts = {};
+          data.list.forEach(entry => {
+            const dateTime = new Date(entry.dt * 1000);
+            const date = dateTime.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+            if (!dailyForecasts[date]) {
+              dailyForecasts[date] = {
+                date: date,
+                icon: `https://openweathermap.org/img/w/${entry.weather[0].icon}.png`,
+                maxTemp: -Infinity,
+                minTemp: Infinity,
+                weatherType: entry.weather[0].main
+              };
+            }
+
+            if (entry.main.temp_max > dailyForecasts[date].maxTemp) {
+              dailyForecasts[date].maxTemp = entry.main.temp_max;
+            }
+            if (entry.main.temp_min < dailyForecasts[date].minTemp) {
+              dailyForecasts[date].minTemp = entry.main.temp_min;
+            }
+          });
+
+          Object.values(dailyForecasts).forEach(day => {
+            const forecastCard = document.createElement('div');
+            forecastCard.classList.add('daily-forecast-card');
+
+            forecastCard.innerHTML = `
+      <p class="daily-forecast-date">${day.date}</p>
+      <div class="daily-forecast-logo"><img class="imgs-as-icons" src="${day.icon}"></div>
+      <div class="max-min-temperature-daily-forecast">
+        <span class="max-daily-forecast">${Math.round(day.maxTemp - 273.15)}<sup>o</sup>C</span>
+        <span class="min-daily-forecast">${Math.round(day.minTemp - 273.15)}<sup>o</sup>C</span>
+      </div>
+      <p class="weather-type-daily-forecast">${day.weatherType}</p>
+    `;
+
+            forecastContainer.appendChild(forecastCard);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+
+      document.getElementById("locationName").innerHTML = location;
+      document.getElementById("temperatureValue").innerHTML = temperature + "<sup>o</sup>C";
+      document.getElementById("weatherType").innerHTML = weatherType;
+      document.getElementById("realFeelAdditionalValue").innerHTML = realFeel + "<sup>o</sup>C";
+      document.getElementById("windSpeedAdditionalValue").innerHTML = windSpeed + " km/h";
+      document.getElementById("windDirectionAdditionalValue").innerHTML = windDirection;
+      document.getElementById("visibilityAdditionalValue").innerHTML = visibility + " km";
+      document.getElementById("pressureAdditionalValue").innerHTML = pressure;
+      document.getElementById("maxTemperatureAdditionalValue").innerHTML = maxTemperature + "<sup>o</sup>C";
+      document.getElementById("minTemperatureAdditionalValue").innerHTML = minTemperature + "<sup>o</sup>C";
+      document.getElementById("humidityAdditionalValue").innerHTML = humidity;
+      document.getElementById("sunriseAdditionalValue").innerHTML = sunrise;
+      document.getElementById("sunsetAdditionalValue").innerHTML = sunset;
+    }
+    else {
+      document.getElementById("locationName").innerHTML = "City Not Found";
       document.getElementById("temperatureValue").innerHTML = "";
       document.getElementById("weatherType").innerHTML = "";
-
-      const img1 = document.createElement("img");
-      const img2 = document.createElement("img");
-      const img3 = document.createElement("img");
-
-      img1.id = "loader1";
-      img2.id = "loader2";
-      img3.id = "loader3";
-
-      img1.src = "icons/loader.gif";
-      img2.src = "icons/loader.gif";
-      img3.src = "icons/loader.gif";
-
-      const parentElement1 = document.getElementById("locationName");
-      const parentElement2 = document.getElementById("temperatureValue");
-      const parentElement3 = document.getElementById("weatherType");
-
-      parentElement1.appendChild(img1);
-      parentElement2.appendChild(img2);
-      parentElement3.appendChild(img3);
-
-      // document.getElementById("loader1").src = "icons/loader.gif";
-      // document.getElementById("loader2").src = "icons/loader.gif";
-      // document.getElementById("loader3").src = "icons/loader.gif";
     }
+  }
 
-    var cityInputValue = cityInput.value;
+  getWeather();
+}
 
-    var apiKey = "b1fd6e14799699504191b6bdbcadfc35"; // Default
-    var unit = "metric";
-    var apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityInputValue}&appid=${apiKey}&units=${unit}`;
+function loader() {
+  document.getElementById("locationName").innerHTML = "";
+  document.getElementById("temperatureValue").innerHTML = "";
+  document.getElementById("weatherType").innerHTML = "";
 
-    if (cityInputValue != "") {
-      async function getWeather() {
-        var response = await fetch(apiUrl);
-        var data = await response.json();
+  const img1 = document.createElement("img");
+  const img2 = document.createElement("img");
+  const img3 = document.createElement("img");
 
-        if (data.message != "city not found" && data.cod != "404") {
-          // Use the integrated weather display functions from features.js
-          if (typeof window.weatherApp !== 'undefined' && typeof window.updateWeatherDisplay === 'function') {
-            window.weatherApp.currentCity = data.name;
-            window.weatherApp.currentWeatherData = data;
-            window.updateWeatherDisplay(data);
-            window.fetchForecast(data.name);
-            
-            // Call new features
-            if (typeof fetchHourlyForecast === 'function') {
-              fetchHourlyForecast(data.name);
-            }
-            if (typeof fetchAirQuality === 'function') {
-              fetchAirQuality(data.coord.lat, data.coord.lon);
-            }
-            if (typeof addToSearchHistory === 'function') {
-              addToSearchHistory(data.name);
-            }
-            if (typeof updateDynamicBackground === 'function') {
-              updateDynamicBackground(data.weather[0].main, data.sys);
-            }
-            return;
-          }
-          
-          // Fallback to old logic if features.js is not loaded
-          var location = data.name;
-          var temperature = data.main.temp;
-          var weatherType = data.weather[0].description;
-          var realFeel = data.main.feels_like;
-          var windSpeed = data.wind.speed;
-          var windDirection = data.wind.deg;
-          var visibility = data.visibility / 1000;
-          var pressure = data.main.pressure;
-          var maxTemperature = data.main.temp_max;
-          var minTemperature = data.main.temp_min;
-          var humidity = data.main.humidity;
-          var sunrise = data.sys.sunrise;
-          var sunset = data.sys.sunset;
+  img1.id = "loader1";
+  img2.id = "loader2";
+  img3.id = "loader3";
 
-          fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${cityInputValue}&appid=${apiKey}`)
-            .then(response => response.json())
-            .then(data => {
-              const forecastContainer = document.getElementById('forecast-container');
+  img1.src = "icons/loader.gif";
+  img2.src = "icons/loader.gif";
+  img3.src = "icons/loader.gif";
 
-              forecastContainer.innerHTML = '';
+  const parentElement1 = document.getElementById("locationName");
+  const parentElement2 = document.getElementById("temperatureValue");
+  const parentElement3 = document.getElementById("weatherType");
 
-              const dailyForecasts = {};
-              data.list.forEach(entry => {
-                const dateTime = new Date(entry.dt * 1000);
-                const date = dateTime.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
-                if (!dailyForecasts[date]) {
-                  dailyForecasts[date] = {
-                    date: date,
-                    icon: `https://openweathermap.org/img/w/${entry.weather[0].icon}.png`,
-                    maxTemp: -Infinity,
-                    minTemp: Infinity,
-                    weatherType: entry.weather[0].main
-                  };
-                }
+  parentElement1.appendChild(img1);
+  parentElement2.appendChild(img2);
+  parentElement3.appendChild(img3);
+}
 
-                if (entry.main.temp_max > dailyForecasts[date].maxTemp) {
-                  dailyForecasts[date].maxTemp = entry.main.temp_max;
-                }
-                if (entry.main.temp_min < dailyForecasts[date].minTemp) {
-                  dailyForecasts[date].minTemp = entry.main.temp_min;
-                }
-              });
+// Debounced search handler
+var debouncedSearch = debounce(function() {
+  var cityInputValue = cityInput.value.trim();
+  if (cityInputValue !== "") {
+    fetchWeather(cityInputValue);
+  }
+}, 600);
 
-              Object.values(dailyForecasts).forEach(day => {
-                const forecastCard = document.createElement('div');
-                forecastCard.classList.add('daily-forecast-card');
+// Handle input event for debounced search
+cityInput.addEventListener("input", debouncedSearch);
 
-                forecastCard.innerHTML = `
-        <p class="daily-forecast-date">${day.date}</p>
-        <div class="daily-forecast-logo"><img class="imgs-as-icons" src="${day.icon}"></div>
-        <div class="max-min-temperature-daily-forecast">
-          <span class="max-daily-forecast">${Math.round(day.maxTemp - 273.15)}<sup>o</sup>C</span>
-          <span class="min-daily-forecast">${Math.round(day.minTemp - 273.15)}<sup>o</sup>C</span>
-        </div>
-        <p class="weather-type-daily-forecast">${day.weatherType}</p>
-      `;
-
-                forecastContainer.appendChild(forecastCard);
-              });
-            })
-            .catch(error => {
-              console.error('Error fetching data:', error);
-            });
-
-
-
-          document.getElementById("locationName").innerHTML = location;
-          document.getElementById("temperatureValue").innerHTML = temperature + "<sup>o</sup>C";
-          document.getElementById("weatherType").innerHTML = weatherType;
-          document.getElementById("realFeelAdditionalValue").innerHTML = realFeel + "<sup>o</sup>C";
-          document.getElementById("windSpeedAdditionalValue").innerHTML = windSpeed + " km/h";
-          document.getElementById("windDirectionAdditionalValue").innerHTML = windDirection;
-          document.getElementById("visibilityAdditionalValue").innerHTML = visibility + " km";
-          document.getElementById("pressureAdditionalValue").innerHTML = pressure;
-          document.getElementById("maxTemperatureAdditionalValue").innerHTML = maxTemperature + "<sup>o</sup>C";
-          document.getElementById("minTemperatureAdditionalValue").innerHTML = minTemperature + "<sup>o</sup>C";
-          document.getElementById("humidityAdditionalValue").innerHTML = humidity;
-          document.getElementById("sunriseAdditionalValue").innerHTML = sunrise;
-          document.getElementById("sunsetAdditionalValue").innerHTML = sunset;
-        }
-        else {
-          document.getElementById("locationName").innerHTML = "City Not Found";
-          document.getElementById("temperatureValue").innerHTML = "";
-          document.getElementById("weatherType").innerHTML = "";
-        }
-      }
-
-      getWeather();
+// Handle Enter key for immediate search
+cityInput.addEventListener("keyup", function (event) {
+  if (event.key === "Enter") {
+    // Clear any pending debounced search
+    clearTimeout(debounceTimer);
+    
+    var cityInputValue = cityInput.value.trim();
+    if (cityInputValue !== "") {
+      fetchWeather(cityInputValue);
+    } else {
+      document.getElementById("locationName").innerHTML = "Enter a city name...";
     }
-    else document.getElementById("locationName").innerHTML = "Enter a city name...";
   }
 });
 
